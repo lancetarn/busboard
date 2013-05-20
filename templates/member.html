@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Register</h1>
+<form name="register" id="register" action="member" method="post">
+    <label for="username">Username</label>
+    <input name="username" type="text" id="username">
+    <label for="password">Password</label>
+    <input name="password" type="password" id="password">
+    <label for="email">Email</label>
+    <input name="email" type="text" id="email"> 
+    <button type="submit">Submit</button>
+</form>
+{% enblock %}
