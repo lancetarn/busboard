@@ -1,26 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>{{ page_title }} - Busboard</title>
+<title>{{ vars.title }} - Busboard</title>
 </head>
 <body>
 {% block messages %}
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-<ul class="flashes">
-{% for message in messages %}
-<li>{{ message }}</li>
-{% endfor %}
-</ul>
-{% endif %}
-{ endwith %}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+{% endblock %}
+{% block logout %}
+    {% if vars.logged_in %}
+        <span class="logout"><a href="{{url_for('logout')}}">Log Out</a></span>
+    {% endif %}
+{% endblock %}
 <div id="content">
-{% block content %}{% endblock %}
+    {% block content %}{% endblock %}
 </div>
 <div id="footer">
-{% block footer %}{% endblock %}
+    {% block footer %}{% endblock %}
 </div>
-<script src="js/jquery-1.9.1.js"></script>
-<script src="js/busboard.js"></script>
+<script src={{url_for('static', filename='js/jquery-1.9.1.js')}}></script>
+<script src={{url_for('static', filename='js/busboard.js')}}></script>
 </body>
 </html>
