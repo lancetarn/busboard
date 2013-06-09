@@ -1,31 +1,37 @@
 var BusBoard = {
 	base_url : 'http://svc.metrotransit.org/NexTrip',
-	get_routes  :  function( ) {
+    directions : {
+        1 : 'Southbound',
+        2 : 'Eastbound',
+        3 : 'Westbound',
+        4 : 'Northbound'
+    },	
+
+    routes : {},
+
+    get_routes  :  function( ) {
 		if ( BusBoard.routes ) {
 			return BusBoard.routes;
 		}
 		else {
-			var url = this.base_url + '/Routes';
+			var url = '/routes';
 			route_response = $.ajax( url, { 
 				type : 'GET',
-				crossDomain : true,
-				dataType : 'jsonp'
+				dataType : 'json'
 				} );
 			console.log( route_response );
 			return route_response.content;
-		
 		}
 	},
 
-	hotStop : function ( hotstop ) {
+	hotStop : function ( hotstop_json ) {
 		
 			this.stop       =  hotstop.stop;
 			this.route      =  hotstop.route;
 			this.direction  =  hotstop.direction;
-			this.base_url   =  
 			
 			this.request_departures  =  function( ) {
-				var url = this.base_url +
+				var url = BusBoard.base_url +
 					'/' + this.route +
 					'/' + this.direction +
 					'/' + this.stop;
@@ -33,7 +39,41 @@ var BusBoard = {
 				$.get( url, this.add_departure_info );
 				};
 
-		},
+            this.get_route_selector = function( ) {
+                routes = BusBoard.get_routes();
+                if ( routes ) {
+                    return BusBoard.render( 'hs_routes.html', routes );
+                }
+            };
+
+            this.insert_hotspot = function ( ) {};
+            this.save_hotspot = function ( hotspot_id ) {};
+    },
+
+    render : function (tmpl_name, tmpl_data) {
+        if ( !render.tmpl_cache ) { 
+            render.tmpl_cache = {};
+        }
+
+        if ( ! render.tmpl_cache[tmpl_name] ) {
+            var tmpl_dir = '/templates';
+            var tmpl_url = tmpl_dir + '/' + tmpl_name + '.html';
+
+            var tmpl_string;
+            $.ajax({
+                url: tmpl_url,
+                method: 'GET',
+                async: false,
+                success: function(data) {
+                    tmpl_string = data;
+                }
+            });
+
+            render.tmpl_cache[tmpl_name] = Handlebars.compile(tmpl_string);
+        }
+
+        return render.tmpl_cache[tmpl_name](tmpl_data);
+    },
 
 
     loading_decorator : function(el, decoration) {

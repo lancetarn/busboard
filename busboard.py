@@ -1,5 +1,5 @@
 import time
-from flask import Flask, request, session, g, redirect, url_for, \
+from flask import Flask, jsonify, request, session, g, redirect, url_for, \
     render_template, flash
 import requests as outbound
 import xml.etree.ElementTree as ET
@@ -44,8 +44,13 @@ def build_nextrip_routes():
 def build_stops_for_routes():
     routes = Route.select()
     for route in routes:
-        rda = RouteDirectionAssociation.select().where(RouteDirectionAssociation.route == route)
-        url = app.config['NEXTRIP_BASE_URL'] + 'Stops/' + route.route + '/' + str(rda[0].direction.value)
+        rda = RouteDirectionAssociation.select().where(
+            RouteDirectionAssociation.route == route
+        )
+        url = app.config['NEXTRIP_BASE_URL'] + 'Stops/' \
+            + route.route + '/' \
+            + str(rda[0].direction.value)
+
         print url
         # Get the stops
         stop_response = outbound.get(url)
@@ -53,8 +58,6 @@ def build_stops_for_routes():
         for child in xml:
             abbr = child.findtext(app.config['NEXTRIP_XML_PREFIX'] + 'Value')
             name = child.findtext(app.config['NEXTRIP_XML_PREFIX'] + 'Text')
-            print name
-            print abbr
 
             try:
                 stop = Stop.get(Stop.abbr == abbr)
@@ -196,8 +199,28 @@ def show_hotstops():
 
 @app.route('/routes')
 def routes():
-    routes = get_nextrip_routes()
-    return routes
+    routes = Route.select().dicts()
+    j_routes = {}
+    for route in routes:
+        del route['updated']
+        j_routes[str(route['id'])] = route
+
+    return jsonify(**j_routes)
+
+@app.route('/stops/<int:route_id>/<int:direction>')
+def stops(route_id, direction):
+    stops = Stop.select().dicts()\
+        .join(RouteStopAssociation)\
+        .join(Route)\
+        .where(Route.id == route_id)\
+        # Probably need to rebuild RSA table for ordering.
+
+    j_stops = {}
+    for stop in stops:
+        del stop['updated']
+        j_stops[str(stop['id'])] = stop
+
+    return jsonify(**j_stops)
 
 
 @app.route('/logout')

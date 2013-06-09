@@ -5,7 +5,7 @@
     <div id="hotstops" class="hotstops">
         {% for hotstop in vars.hotstops %}
         <h2 class="hotstop">{{hotstop.route}} - {{hotstop.stop}} - {{hotstop.direction}}</h2>
-        <ul id="hotstop-{{hotstop.id}}">
+        <ul id="hotstop_{{hotstop.id}}">
             <li class="route">Route: {{hotstop.route}}</li>
             <li class="stop">Stop: {{hotstop.stop}}</li>
             <li class="direction">{{hotstop.direction}}</li>

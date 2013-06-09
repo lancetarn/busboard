@@ -29,6 +29,13 @@ class Route(BaseModel):
     providerid = CharField()
     updated = DateTimeField(default=datetime.datetime.now)
 
+    def available_directions(self):
+        directions = Direction.select().dicts()\
+            .join(RouteStopAssociation)\
+            .where(Route == self)
+
+        return directions
+
 
 class Direction(BaseModel):
     value = IntegerField()
