@@ -108,14 +108,16 @@ def after_request(response):
 
 def get_member_from_credentials(form):
     try:
-        member = Member.get(Member.username == form['username']
-                            & Member.password == form['password'])
+        member = Member.get((Member.username == form['username'])
+                            & (Member.password == form['password']))
+        print form['username']
+        print form['password']
         return member
     except Member.DoesNotExist:
         return False
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login/', methods=['GET', 'POST'])
 def login():
     if session.get('member_id'):
         return redirect(url_for('show_hotstops'))
@@ -123,22 +125,25 @@ def login():
     message = 'Welcom to HotStop!'
     if request.method == 'POST':
         member = get_member_from_credentials(request.form)
+        print member
 
         if member:
             session['member_id'] = member.id
             message = 'Welcome back, ' + member.username
-            flash(message)
-            redirect(url_for('show_hotstops'))
+            return redirect(url_for('show_hotstops'))
 
         else:
             message = 'We could not find an account with those credentials.'
+            return redirect(url_for('update_member'))
 
+    print request.method
     flash(message)
     return render_template('login.html', vars=get_template_vars())
 
 
-@app.route('/member', methods=['GET', 'POST', 'PUT', 'DELETE'])
+@app.route('/member/', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def update_member():
+    print request.method
     if request.method == 'POST':
         # Is this seat taken?
         try:
@@ -146,7 +151,7 @@ def update_member():
                 Member.username == request.form['username'])
             message = "The username '" + member.username + \
                 "' is already in use."
-            destination = 'member'
+            destination = 'update_member'
         #Create a new member
         except Member.DoesNotExist:
             new_member = Member()
@@ -162,7 +167,7 @@ def update_member():
         return render_template('member.html', vars=g.template_vars)
 
 
-@app.route('/hotstops', methods=['GET', 'PUT', 'POST', 'DELETE'])
+@app.route('/hotstops/', methods=['GET', 'PUT', 'POST', 'DELETE'])
 def show_hotstops():
 
     # No riff-raff
@@ -171,9 +176,11 @@ def show_hotstops():
 
     # Show the goods
     if request.method == 'GET':
-        print session.get('member_id')
-        hotstops = HotStop.select().where(
+        print 'Member ID: ' + str(session.get('member_id'))
+        hs_qr = HotStop.select().where(
             HotStop.member == session.get('member_id'))
+        hotstops = hs_qr.execute()
+        hotstops = hotstops if hotstops.len() else False
 
     elif request.method == 'POST':
 
@@ -206,6 +213,7 @@ def routes():
         j_routes[str(route['id'])] = route
 
     return jsonify(**j_routes)
+
 
 @app.route('/stops/<int:route_id>/<int:direction>')
 def stops(route_id, direction):

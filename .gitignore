@@ -1,2 +1,5 @@
 # Precompiled python #
 *.pyc
+
+# Swaps #
+*.swp

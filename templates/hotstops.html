@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
     <h1>HotStops</h1>
-    {% if vars.hotstops %}
     <div id="hotstops" class="hotstops">
+    {% if vars.hotstops %}
         {% for hotstop in vars.hotstops %}
         <h2 class="hotstop">{{hotstop.route}} - {{hotstop.stop}} - {{hotstop.direction}}</h2>
         <ul id="hotstop_{{hotstop.id}}">
@@ -10,14 +10,16 @@
             <li class="stop">Stop: {{hotstop.stop}}</li>
             <li class="direction">{{hotstop.direction}}</li>
             <li class="scheduled">Next Scheduled Trip:
-            <span class="loader" data-hsid="{{hotstop.id}}">Loading...</span>
+            <span class="loader" data-hsid="{{hotstop.id}}"></span>
             </li>
             <li class="predicted">Next Predicted Actual:
-            <span class="loader" data-hsid="{{hotstop.id}}">Loading...</span>
+            <span class="loader" data-hsid="{{hotstop.id}}"></span>
             </li>
         </ul>
         {% endfor %}
-    </div>
+    {% else %}
+    <h2 class="hotstop">No HotStops found for you, madame.</h2>
     {% endif %}
+    </div>
 {% endblock %}
 
