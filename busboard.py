@@ -177,10 +177,9 @@ def show_hotstops():
     # Show the goods
     if request.method == 'GET':
         print 'Member ID: ' + str(session.get('member_id'))
-        hs_qr = HotStop.select().where(
+        hotstops = HotStop.select().where(
             HotStop.member == session.get('member_id'))
-        hotstops = hs_qr.execute()
-        hotstops = hotstops if hotstops.len() else False
+        hotstops = hotstops if hotstops.exists() else False
 
     elif request.method == 'POST':
 

@@ -1,13 +1,22 @@
 var BusBoard = {
 	base_url : 'http://svc.metrotransit.org/NexTrip',
-    directions : {
-        1 : 'Southbound',
-        2 : 'Eastbound',
-        3 : 'Westbound',
-        4 : 'Northbound'
-    },	
+    directions : [
+      {value : 1, text : 'Southbound'},
+      {value : 2, text : 'Eastbound'},
+      {value : 3, text : 'Westbound'},
+      {value : 4, text : 'Northbound'}
+    ],	
 
     routes : {},
+    hotstops : [],
+
+    init : function ( ) {
+        self = this;
+        self.routes = self.get_routes( );
+        self.hotstops = self.get_hotstops( );
+
+        $('.new_hs').on('click', self.render_form);
+        },
 
     get_routes  :  function( ) {
 		if ( BusBoard.routes ) {
@@ -23,6 +32,35 @@ var BusBoard = {
 			return route_response.content;
 		}
 	},
+
+    get_hotstops : function( ) {
+        if ( self.hotstops ) {
+            return self.hotstops;
+        }
+        else {
+            hs_el = $( 'hotstops' );
+            hs_el.fadeOut();
+            var url = '/hotstops/json/';
+            hotstops_response = $.ajax( url, {
+                type : 'GET',
+                dataType : 'json',
+                success : function ( data ) {
+                    this.hotstops = data;
+                    hs_el.html( this.render( 'hs_base.html', data ) )
+                        .fadeIn();
+                }
+            } );
+        }
+    },
+
+    render_form : function( ) {
+        data = { routes : self.routes,
+            directions : self.directions
+        };
+        BusBoard.render( 'hs_form', data );
+    },
+
+
 
 	hotStop : function ( hotstop_json ) {
 		
@@ -48,9 +86,12 @@ var BusBoard = {
 
             this.insert_hotspot = function ( ) {};
             this.save_hotspot = function ( hotspot_id ) {};
+
     },
 
+
     render : function (tmpl_name, tmpl_data) {
+        var render = render || {};
         if ( !render.tmpl_cache ) { 
             render.tmpl_cache = {};
         }
@@ -134,5 +175,4 @@ var BusBoard = {
 
 	}
 };
-load_els = $('span.loader');
-BusBoard.loading_decorator(load_els, 'Loading...');
+BusBoard.init( );

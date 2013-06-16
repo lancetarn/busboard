@@ -1,8 +1,10 @@
 <!-- Use in context HotStop -->
 <input type="select" name="route_{{this.id}}" id="route_{{this.id}}">
     <option label="Select route..." value="">
+    {{if routes}}
     {{#each this.routes}}
     <option selected="{{route.selected}}" label="{{route.description}}" value="{{route.id}}">
     {{/each}}
+    {{endif}}
 </input>
 

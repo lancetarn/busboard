@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
     <h1>HotStops</h1>
+    <button class="new_hs">Add a new HotStop</button>
     <div id="hotstops" class="hotstops">
-    {% if vars.hotstops %}
+        {% if vars.hotstops %}
         {% for hotstop in vars.hotstops %}
         <h2 class="hotstop">{{hotstop.route}} - {{hotstop.stop}} - {{hotstop.direction}}</h2>
         <ul id="hotstop_{{hotstop.id}}">
