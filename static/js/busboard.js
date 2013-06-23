@@ -19,18 +19,15 @@ var BusBoard = {
         },
 
     get_routes  :  function( ) {
-		if ( BusBoard.routes ) {
-			return BusBoard.routes;
+        if ( ! $.isEmptyObject( self.routes ) ) {
+			return self.routes;
 		}
 		else {
 			var url = '/routes';
-			route_response = $.ajax( url, { 
-				type : 'GET',
-				dataType : 'json'
-				} );
-			console.log( route_response );
-			return route_response.content;
-		}
+			$.get( url, function( response ) {
+                self.routes = response;
+                } );
+        }
 	},
 
     get_hotstops : function( ) {
@@ -54,36 +51,76 @@ var BusBoard = {
     },
 
     render_form : function( ) {
-        data = { routes : self.routes,
+        var data = { routes : self.routes, 
             directions : self.directions
         };
-        BusBoard.render( 'hs_form', data );
+        console.log( data );
+        var source;
+		var response = $.get( '/static/js_temps/hs_form.html', 
+            function ( html ) {
+               source = html;
+                var template = Handlebars.compile( source );
+                $('#pretext').append(template(data));
+            } );
+		
     },
 
 
 
 	hotStop : function ( hotstop_json ) {
 		
-			this.stop       =  hotstop.stop;
-			this.route      =  hotstop.route;
-			this.direction  =  hotstop.direction;
+            var self = this;
+
+            self.id         =  hotstop_json.id || BusBoard.next_id;
+			self.stop       =  hotstop_json.stop;
+			self.route      =  hotstop_json.route;
+			self.direction  =  hotstop_json.direction;
+
+            self.available_directions = self.get_available_directions();
+
+            // Set up listeners
+            $( '#route_select_test' ).on( 'change', handle_update_stops );
+            $( '#direction_select_test' ).on ( 'change', handle_update_stops );
 			
-			this.request_departures  =  function( ) {
+			self.request_departures  =  function( ) {
 				var url = BusBoard.base_url +
-					'/' + this.route +
-					'/' + this.direction +
-					'/' + this.stop;
+					'/' + self.route +
+					'/' + self.direction +
+					'/' + self.stop;
 
-				$.get( url, this.add_departure_info );
-				};
+				$.get( url, self.add_departure_info );
+            };
+            
+            self.get_stops = function( ) {
+                var url = '/stops/' +
+                    self.route + '/' +
+                    self.direction; 
+                $.get( url, function( j_stops ) {
+                    self.stops = j_stops;
+                } );
 
-            this.get_route_selector = function( ) {
-                routes = BusBoard.get_routes();
-                if ( routes ) {
-                    return BusBoard.render( 'hs_routes.html', routes );
-                }
             };
 
+            self.get_available_directions = function( ) {
+                var url = '/directions/' + self.route;
+                $.get( url, function( data ) {
+                    self.available_directions = data;
+                } );
+            };
+
+            self.route_selected  =  function ( e ) {
+                console.log( e.currentTarget );
+                 self.route = $(e.currentTarget).val();
+            };
+
+            self.handle_update_stops = function ( ) {
+                // Get the stops
+                // Get the form select element
+                var el = $('#stop_select_test');
+                // Compile the new selector 
+                
+                // Update the form element
+            };
             this.insert_hotspot = function ( ) {};
             this.save_hotspot = function ( hotspot_id ) {};
 
@@ -97,8 +134,8 @@ var BusBoard = {
         }
 
         if ( ! render.tmpl_cache[tmpl_name] ) {
-            var tmpl_dir = '/templates';
-            var tmpl_url = tmpl_dir + '/' + tmpl_name + '.html';
+            var tmpl_dir = '/static/js_temps/';
+            var tmpl_url = tmpl_dir + tmpl_name + '.html';
 
             var tmpl_string;
             $.ajax({

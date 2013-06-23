@@ -31,8 +31,8 @@ class Route(BaseModel):
 
     def available_directions(self):
         directions = Direction.select().dicts()\
-            .join(RouteStopAssociation)\
-            .where(Route == self)
+            .join(RouteDirectionAssociation)\
+            .where(RouteDirectionAssociation.route == self)
 
         return directions
 

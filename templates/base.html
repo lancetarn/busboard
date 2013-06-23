@@ -4,6 +4,7 @@
 <title>{{ vars.title }} - Busboard</title>
 </head>
 <body>
+<div id="pretext">
 {% block messages %}
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -20,6 +21,7 @@
         <span class="logout"><a href="{{url_for('logout')}}">Log Out</a></span>
     {% endif %}
 {% endblock %}
+</div>
 <div id="content">
     {% block content %}{% endblock %}
 </div>

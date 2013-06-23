@@ -230,6 +230,19 @@ def stops(route_id, direction):
     return jsonify(**j_stops)
 
 
+@app.route('/directions/<int:route_id>')
+def directions(route_id):
+
+    route = Route.get(Route.id == route_id)
+    avail_directions = route.available_directions()
+
+    j_directions = {}
+    for direction in avail_directions:
+        j_directions[str(direction['id'])] = direction
+
+    return jsonify(**j_directions)
+
+
 @app.route('/logout')
 def logout():
     session.pop('member_id', None)

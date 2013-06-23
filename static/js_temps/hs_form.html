@@ -1,0 +1,25 @@
+<form id=hotstop_form_{{next_id}} name="add_hotstop" action="">
+<select class="route_select" type="select" name="route_{{next_id}}" id="route_select_text">
+    <option selected="selected" label="Select route..." value="">
+    {{#if routes}}
+    {{#each routes}}
+    <option label="{{description}}" value="{{id}}">
+    {{/each}}
+    {{/if}}
+</select>
+<select class="direction_select" name="direction" id="direction_{{next_id}}">
+    <option label="Select direction..." value="">
+    {{#each directions}}
+    <option label="{{text}}" value="{{value}}">
+    {{/each}}
+    </select>
+    <select class="stop_select" name="stop_{{next_id}}" id="stop_{{next_id}}">
+    <option label="Select stop..." value="">
+    {{#if stops }}
+    {{#each stops}}
+    <option label="{{text}}" value="{{id}}">
+    {{/each}}
+    {{/if}}
+    </select>
+    <button id=submit_hotstop_{{next_id}} class="add_hs">Add HotStop</button>
+</form>
