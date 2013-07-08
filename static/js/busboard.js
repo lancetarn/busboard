@@ -117,8 +117,9 @@ var BusBoard = {
                 // Get the stops
                 // Get the form select element
                 var el = $('#stop_select_test');
+				el_stops = render( 'hs_stops', self );
+				el.html( el_stops );
                 // Compile the new selector 
-                
                 // Update the form element
             };
             this.insert_hotspot = function ( ) {};
