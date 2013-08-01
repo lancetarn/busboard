@@ -15,7 +15,7 @@ var BusBoard = {
         self.routes = self.get_routes( );
         self.hotstops = self.get_hotstops( );
 
-        $('.new_hs').on('click', self.render_form);
+        $('.new_hs').on('click', self.new_hotstop);
         },
 
     get_routes  :  function( ) {
@@ -50,37 +50,35 @@ var BusBoard = {
         }
     },
 
-    render_form : function( ) {
-        var data = { routes : self.routes, 
-            directions : self.directions
-        };
-        console.log( data );
-        var source;
-		var response = $.get( '/static/js_temps/hs_form.html', 
-            function ( html ) {
-               source = html;
-                var template = Handlebars.compile( source );
-                $('#pretext').append(template(data));
-            } );
-		
-    },
-
+	
+	new_hotstop : function( ) {
+		self.hotstops.push( new self.hotStop( ) );
+	},
 
 
 	hotStop : function ( hotstop_json ) {
 		
+			hotstop_json = hotstop_json || {};
+			
             var self = this;
 
-            self.id         =  hotstop_json.id || BusBoard.next_id;
-			self.stop       =  hotstop_json.stop;
-			self.route      =  hotstop_json.route;
-			self.direction  =  hotstop_json.direction;
+			self.init  =  function ( hotstop_json ) {
+				
+				self.id         =  hotstop_json.id || '';
+				self.stop       =  hotstop_json.stop || {};
+				self.route      =  hotstop_json.route || {};
+				self.direction  =  hotstop_json.direction || {};
+				//self.available_directions = self.get_available_directions();
+				self.render( );
+			};
 
-            self.available_directions = self.get_available_directions();
 
             // Set up listeners
-            $( '#route_select_test' ).on( 'change', handle_update_stops );
-            $( '#direction_select_test' ).on ( 'change', handle_update_stops );
+            self.add_route_listeners  =  function ( form ) {
+				form
+					.on( 'change','.route_select', self.handle_update_route );
+					//.on ( 'change', 'direction_select', self.handle_update_stops );
+			};
 			
 			self.request_departures  =  function( ) {
 				var url = BusBoard.base_url +
@@ -88,13 +86,13 @@ var BusBoard = {
 					'/' + self.direction +
 					'/' + self.stop;
 
-				$.get( url, self.add_departure_info );
+				$.get( url, self.update_departure_info );
             };
             
             self.get_stops = function( ) {
                 var url = '/stops/' +
-                    self.route + '/' +
-                    self.direction; 
+                    self.route.id + '/' +
+                    self.direction.id; 
                 $.get( url, function( j_stops ) {
                     self.stops = j_stops;
                 } );
@@ -102,9 +100,10 @@ var BusBoard = {
             };
 
             self.get_available_directions = function( ) {
-                var url = '/directions/' + self.route;
-                $.get( url, function( data ) {
+                var url = '/directions/' + self.route.id;
+                return $.get( url, function( data ) {
                     self.available_directions = data;
+					console.log( self.available_directions );
                 } );
             };
 
@@ -112,8 +111,25 @@ var BusBoard = {
                 console.log( e.currentTarget );
                  self.route = $(e.currentTarget).val();
             };
+			self.handle_update_route = function ( e ) {
+				self.route.id  =  e.currentTarget.value;
+				var dfd = self.get_available_directions( );
+				dfd.then( self.update_form_directions );
+			};
+
+			self.update_form_directions = function ( ) {
+				var direction_select  =  self.hs_el.find( 'select.direction_select');
+				var source;
+				var response = $.get( '/static/js_temps/hs_directions.html' ); 
+				response.then ( function ( html ) {
+					source = html;
+					var template = Handlebars.compile( source );
+					direction_select.html(template(self.available_directions));
+				} );
+			};
 
             self.handle_update_stops = function ( ) {
+				console.log( 'calling' );
                 // Get the stops
                 // Get the form select element
                 var el = $('#stop_select_test');
@@ -122,9 +138,33 @@ var BusBoard = {
                 // Compile the new selector 
                 // Update the form element
             };
-            this.insert_hotspot = function ( ) {};
-            this.save_hotspot = function ( hotspot_id ) {};
 
+			self.render  =  function ( ) {
+				if ( self.id ) {
+				// Put yourself into the base template.
+				}
+				// Render a new form
+				else {
+					var data = { routes : BusBoard.routes, 
+						directions : BusBoard.directions,
+						id : 'new'
+					};
+					var source;
+					var response = $.get( '/static/js_temps/hs_form.html' ); 
+					response.then ( function ( html ) {
+						source = html;
+						var template = Handlebars.compile( source );
+						$('#hotstops').prepend(template(data));
+						self.add_route_listeners( $('form.hotstop_form') );
+						self.hs_el = hotstop_json.el || $('form.hotstop_form.new_hs');
+					} );
+				}
+			};
+
+            self.insert_hotspot = function ( ) {};
+            self.save_hotspot = function ( hotspot_id ) {};
+			
+			self.init( hotstop_json );
     },
 
 
