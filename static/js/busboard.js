@@ -69,6 +69,7 @@ var BusBoard = {
 				self.route      =  hotstop_json.route || {};
 				self.direction  =  hotstop_json.direction || {};
 				//self.available_directions = self.get_available_directions();
+				self.available_stops = {};
 				self.render( );
 			};
 
@@ -76,8 +77,12 @@ var BusBoard = {
             // Set up listeners
             self.add_route_listeners  =  function ( form ) {
 				form
-					.on( 'change','.route_select', self.handle_update_route );
-					//.on ( 'change', 'direction_select', self.handle_update_stops );
+					.on( 'change','.route_select', self.handle_route_change )
+					.on ( 'change', '.direction_select', self.handle_direction_change );
+			};
+
+			self.add_submit_listener = function ( form ) {
+				form.on( 'click', 'button.add_hs', self.save_hotstop( ) );
 			};
 			
 			self.request_departures  =  function( ) {
@@ -89,12 +94,12 @@ var BusBoard = {
 				$.get( url, self.update_departure_info );
             };
             
-            self.get_stops = function( ) {
+            self.get_available_stops = function( ) {
                 var url = '/stops/' +
                     self.route.id + '/' +
                     self.direction.id; 
-                $.get( url, function( j_stops ) {
-                    self.stops = j_stops;
+                return $.get( url, function( j_stops ) {
+                    self.available_stops = j_stops;
                 } );
 
             };
@@ -103,15 +108,10 @@ var BusBoard = {
                 var url = '/directions/' + self.route.id;
                 return $.get( url, function( data ) {
                     self.available_directions = data;
-					console.log( self.available_directions );
                 } );
             };
 
-            self.route_selected  =  function ( e ) {
-                console.log( e.currentTarget );
-                 self.route = $(e.currentTarget).val();
-            };
-			self.handle_update_route = function ( e ) {
+			self.handle_route_change = function ( e ) {
 				self.route.id  =  e.currentTarget.value;
 				var dfd = self.get_available_directions( );
 				dfd.then( self.update_form_directions );
@@ -120,24 +120,30 @@ var BusBoard = {
 			self.update_form_directions = function ( ) {
 				var direction_select  =  self.hs_el.find( 'select.direction_select');
 				var source;
-				var response = $.get( '/static/js_temps/hs_directions.html' ); 
+				var response = $.get( '/static/js_temps/hs_directions.hbs' ); 
 				response.then ( function ( html ) {
 					source = html;
 					var template = Handlebars.compile( source );
-					direction_select.html(template(self.available_directions));
+					direction_select.html(template(self));
 				} );
 			};
 
-            self.handle_update_stops = function ( ) {
-				console.log( 'calling' );
-                // Get the stops
-                // Get the form select element
-                var el = $('#stop_select_test');
-				el_stops = render( 'hs_stops', self );
-				el.html( el_stops );
-                // Compile the new selector 
-                // Update the form element
-            };
+            self.handle_direction_change = function ( e ) {
+				self.direction.id  = e.currentTarget.value;
+				dfd = self.get_available_stops( );
+				dfd.then( self.update_form_stops );
+			};
+
+			self.update_form_stops  =  function( ) {
+				console.log( self.available_stops);
+				var stop_select  =  self.hs_el.find( 'select.stop_select' );
+				var response = $.get( '/static/js_temps/hs_stops.hbs' );
+				response.then( function( html ) {
+					var template = Handlebars.compile( html );
+					stop_select.html( template( self ) );
+				} );
+			};
+
 
 			self.render  =  function ( ) {
 				if ( self.id ) {
@@ -145,24 +151,52 @@ var BusBoard = {
 				}
 				// Render a new form
 				else {
-					var data = { routes : BusBoard.routes, 
+					self.initial_form_data = { routes : BusBoard.routes, 
 						directions : BusBoard.directions,
 						id : 'new'
 					};
-					var source;
-					var response = $.get( '/static/js_temps/hs_form.html' ); 
-					response.then ( function ( html ) {
-						source = html;
-						var template = Handlebars.compile( source );
-						$('#hotstops').prepend(template(data));
-						self.add_route_listeners( $('form.hotstop_form') );
-						self.hs_el = hotstop_json.el || $('form.hotstop_form.new_hs');
-					} );
+					dfds  = self.get_form_partials( );
+					$.when( dfds ).done( self.render_new_form );
 				}
 			};
 
-            self.insert_hotspot = function ( ) {};
-            self.save_hotspot = function ( hotspot_id ) {};
+			self.render_new_form = function ( ) {
+					var source;
+					var response = $.get( '/static/js_temps/hs_form.hbs' ); 
+					response.then ( function ( html ) {
+						source = html;
+						var template = Handlebars.compile( source );
+						self.register_form_partials( );
+						$('#hotstops').prepend(template( self.initial_form_data ));
+						self.add_route_listeners( $('form.hotstop_form') );
+						self.hs_el = $('form.hotstop_form.new_hs');
+					} );
+				};
+
+			self.get_form_partials = function ( ) {
+				var dfds = [];
+				var route_dfd = $.get( '/static/js_temps/hs_routes.hbs', function( html ) {
+					self.route_partial  =  Handlebars.compile( html );
+				} );
+				var direction_dfd = $.get( '/static/js_temps/hs_directions.hbs', function( html ) {
+					self.direction_partial = Handlebars.compile( html );
+				} );
+				var stop_dfd = $.get( '/static/js_temps/hs_stops.hbs', function( html ) {
+					self.stop_partial = Handlebars.compile( html );
+				} );
+				dfds.push( route_dfd, direction_dfd, stop_dfd );
+				return dfds;
+			};
+
+			self.register_form_partials = function( ) {
+				Handlebars.registerPartial( "route_selector", self.route_partial );
+				Handlebars.registerPartial( "direction_selector", self.direction_partial );
+				Handlebars.registerPartial( "stop_selector", self.stop_partial );
+			};
+
+            self.save_hotstop = function ( ) {
+				};
+
 			
 			self.init( hotstop_json );
     },
@@ -254,3 +288,4 @@ var BusBoard = {
 	}
 };
 BusBoard.init( );
+

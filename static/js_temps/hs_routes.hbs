@@ -1,0 +1,10 @@
+<!-- Use in context HotStop -->
+<select class="route_select" name="route" >
+    <option label="Select route..." value="">
+    {{#if this.routes}}
+    {{#each this.routes}}
+    <option selected="{{selected}}" label="{{description}}" value="{{id}}">
+    {{/each}}
+    {{/if}}
+</select>
+

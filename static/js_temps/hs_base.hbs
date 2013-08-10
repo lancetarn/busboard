@@ -1,0 +1,16 @@
+<script id="entry-template" type="text/x-handlebars-template">
+{{#each hotstops}}
+        <h2 class="hotstop">{{this.route}} - {{this.stop}} - {{this.direction}}</h2>
+        <ul id="hotstop_{{this.id}}">
+            <li class="route">Route: {{this.route}}</li>
+            <li class="stop">Stop: {{this.stop}}</li>
+            <li class="direction">{{this.direction}}</li>
+            <li class="scheduled">Next Scheduled Trip:
+            <span class="loader" data-hsid="{{this.id}}">Loading...</span>
+            </li>
+            <li class="predicted">Next Predicted Actual:
+            <span class="loader" data-hsid="{{this.id}}">Loading...</span>
+            </li>
+        </ul>
+{{ end each }}
+</script>

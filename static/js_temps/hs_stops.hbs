@@ -1,0 +1,6 @@
+<select class="stop_select" name="stop" >
+    <option label="Select stop..." value="">
+    {{#each this.available_stops}}
+    <option label="{{name}}" value="{{id}}">
+    {{/each}}
+</select>
