@@ -1,4 +1,5 @@
 import time
+import datetime
 from flask import Flask, jsonify, request, session, g, redirect, url_for, \
     render_template, flash
 import requests as outbound
@@ -170,16 +171,33 @@ def update_member():
 @app.route('/hotstops/', methods=['GET', 'PUT', 'POST', 'DELETE'])
 def show_hotstops():
 
+    print str(request.method) + 'Method'
+    print str(request.is_xhr) + 'XHR'
+
     # No riff-raff
     if not session.get('member_id'):
         return redirect(url_for('login'))
 
     # Show the goods
     if request.method == 'GET':
-        print 'Member ID: ' + str(session.get('member_id'))
+
         hotstops = HotStop.select().where(
             HotStop.member == session.get('member_id'))
-        hotstops = hotstops if hotstops.exists() else False
+
+        if (hotstops.exists()):
+            hs_list = []
+            for hs in hotstops:
+                hs_list.append(hs.to_display_dict())
+        else:
+            hs_list = []
+
+        g.template_vars['title'] = 'HotStops'
+        g.template_vars['hotstops'] = hs_list
+
+        if request.is_xhr:
+            return jsonify({'hotstops': hs_list})
+
+        return render_template('hotstops.html', vars=get_template_vars())
 
     elif request.method == 'POST':
 
@@ -190,17 +208,25 @@ def show_hotstops():
         for field, value in request.form.items():
             setattr(new_hs, field, value)
 
+        new_hs.added_on = datetime.datetime.now()
         new_hs.save()
 
-        return redirect(url_for('show_hotstops'))
+        hs_list = []
+        for hs in new_hs.member.hotstops:
+            hs_list.append(hs.to_display_dict())
+
+        return jsonify({'hotstops': hs_list})
+
+    elif request.method == 'DELETE':
+        query = HotStop.delete().where(HotStop.id == request.form['id'])
+        query.execute()
+        return jsonify({'deleted': request.form['id']})
 
     else:
-        # Update and delete, hmmm?
+        # Update
         pass
 
-    g.template_vars['title'] = 'HotStops'
-    g.template_vars['hotstops'] = hotstops
-    return render_template('hotstops.html', vars=get_template_vars())
+
 
 
 @app.route('/routes')

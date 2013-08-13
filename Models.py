@@ -54,9 +54,22 @@ class RouteDirectionAssociation(BaseModel):
 
 class HotStop(BaseModel):
     member = ForeignKeyField(Member, related_name='hotstops')
-    route = CharField()
-    stop = CharField()
+    route = ForeignKeyField(Route, related_name='hs_route')
+    direction = ForeignKeyField(Direction, related_name='hs_direction')
+    stop = ForeignKeyField(Stop, related_name='hs_stop')
     added_on = DateTimeField()
     updated = DateTimeField(default=datetime.datetime.now)
-    direction = IntegerField()
     dashboard = BooleanField(default=True)
+
+    def to_display_dict(self):
+        return {
+            'direction_id': self.direction.id,
+            'direction_name': self.direction.text,
+            'id': self.id,
+            'member_id': self.member.id,
+            'route_description': self.route.description,
+            'route_id': self.route.id,
+            'route_number': self.route.route,
+            'stop_id': self.stop.id,
+            'stop_name': self.stop.name,
+        }
