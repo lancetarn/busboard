@@ -9,7 +9,6 @@ var BusBoard = {
         self.routes = self.get_routes( );
         self.hotstops = self.get_hotstops( );
 		self.hs_el = $( '#hotstops' );
-		console.log( self.hs_el);
 		
 		$.get( '/static/js_temps/hs_base.hbs', function ( html ) {
 			self.hs_template = Handlebars.compile(html);
@@ -39,20 +38,23 @@ var BusBoard = {
         }
         else {
             var url = '/hotstops/';
-            hotstops_response = $.ajax( url, {
+            response = $.ajax( url, {
                 type : 'GET',
                 dataType : 'json',
-                success : self.set_hotstops
-			});
+             } );
+			response.then( self.set_hotstops );
+			response.then( self.redraw_hotstops );
         }
     },
 
 	redraw_hotstops : function( e ) {
-		console.log( 'Redrawing');
+		console.log( self.hotstops);
 		self.hs_el.fadeOut( function () {
 			self.hs_el.html( self.hs_template(self.hotstops) ).fadeIn();
 			$( '.new_hs' ).fadeIn();
-			
+			$.each( self.hotstops, function( index, hotstop ) {
+				hotstop.set_dom_el();
+			});
 		} );
 	},
 		
@@ -60,7 +62,7 @@ var BusBoard = {
 	
 	new_hotstop : function( ) {
 		$( this ).fadeOut( );
-		var new_hs = new self.hotStop( );
+		var new_hs = new self.hotStop();
 		self.hotstops.push( new_hs );
 		new_hs.render();
 	},
@@ -68,6 +70,7 @@ var BusBoard = {
 	set_hotstops : function( data ) {
 		var pending_hotstops = [];
 		$.each( data.hotstops, function( index, hotstop ) {
+			console.log( hotstop );
 			pending_hotstops.push( new self.hotStop( hotstop ) );
 		} );
 		self.hotstops = pending_hotstops;
@@ -78,15 +81,18 @@ var BusBoard = {
 		
             var self = this;
 
-
 			self.init  =  function ( hotstop_json ) {
 				
-				self.hotstop_json = hotstop_json || {};
+				hotstop_json = hotstop_json || {};
 				
 				self.id         =  hotstop_json.id || 'new_hs';
-				self.stop       =  hotstop_json.stop || {};
-				self.route      =  hotstop_json.route || {};
-				self.direction  =  hotstop_json.direction || {};
+				self.stop_name       =  hotstop_json.stop_name || {};
+				self.route_description      =  hotstop_json.route_description || {};
+				self.route_number = hotstop_json.route_number || {};
+				self.direction_name  =  hotstop_json.direction_name || {};
+				self.stop_id =  hotstop_json.stop_id || {};
+				self.route_id =  hotstop_json.route_id || {};
+				self.direction_id =  hotstop_json.direction_id || {};
 				self.available_routes  =  BusBoard.get_routes( );
 
 				if ( self.route.length ) {
@@ -100,6 +106,11 @@ var BusBoard = {
 
 
             // Set up listeners
+			self.set_dom_el = function( ) {
+				self.el = $( '#hotstop_' + self.id );
+				self.el.on( 'click', '.delete', self.delete_hotstop);
+			},
+
             self.add_route_listeners  =  function ( form ) {
 				form
 					.on( 'change','.route_select', self.handle_route_change )
