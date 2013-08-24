@@ -118,12 +118,13 @@ def get_member_from_credentials(form):
         return False
 
 
+@app.route('/')
 @app.route('/login/', methods=['GET', 'POST'])
 def login():
     if session.get('member_id'):
         return redirect(url_for('show_hotstops'))
 
-    message = 'Welcom to HotStop!'
+    message = 'Welcome to HotStop!'
     if request.method == 'POST':
         member = get_member_from_credentials(request.form)
         print member
@@ -168,11 +169,11 @@ def update_member():
         return render_template('member.html', vars=g.template_vars)
 
 
-@app.route('/hotstops/', methods=['GET', 'PUT', 'POST', 'DELETE'])
-def show_hotstops():
+@app.route('/hotstops/', methods=['GET', 'POST'])
+@app.route('/hotstops/<int:hs_id>', methods=['DELETE', 'PUT'])
+def show_hotstops(hs_id=None):
 
-    print str(request.method) + 'Method'
-    print str(request.is_xhr) + 'XHR'
+    print hs_id
 
     # No riff-raff
     if not session.get('member_id'):
@@ -188,6 +189,7 @@ def show_hotstops():
             hs_list = []
             for hs in hotstops:
                 hs_list.append(hs.to_display_dict())
+            print hs_list
         else:
             hs_list = []
 
@@ -218,18 +220,16 @@ def show_hotstops():
         return jsonify({'hotstops': hs_list})
 
     elif request.method == 'DELETE':
-        query = HotStop.delete().where(HotStop.id == request.form['id'])
+        query = HotStop.delete().where(HotStop.id == hs_id)
         query.execute()
-        return jsonify({'deleted': request.form['id']})
+        return jsonify({'deleted': hs_id})
 
     else:
         # Update
         pass
 
 
-
-
-@app.route('/routes')
+@app.route('/routes/')
 def routes():
     routes = Route.select().dicts()
     j_routes = {}

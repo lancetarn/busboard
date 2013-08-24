@@ -1,6 +1,6 @@
 var BusBoard = {
 
-	base_url : 'http://svc.metrotransit.org/NexTrip',
+	nextrip_url : 'http://svc.metrotransit.org/NexTrip',
     routes : {},
     hotstops : [],
 
@@ -48,7 +48,6 @@ var BusBoard = {
     },
 
 	redraw_hotstops : function( e ) {
-		console.log( self.hotstops);
 		self.hs_el.fadeOut( function () {
 			self.hs_el.html( self.hs_template(self.hotstops) ).fadeIn();
 			$( '.new_hs' ).fadeIn();
@@ -70,7 +69,6 @@ var BusBoard = {
 	set_hotstops : function( data ) {
 		var pending_hotstops = [];
 		$.each( data.hotstops, function( index, hotstop ) {
-			console.log( hotstop );
 			pending_hotstops.push( new self.hotStop( hotstop ) );
 		} );
 		self.hotstops = pending_hotstops;
@@ -85,21 +83,17 @@ var BusBoard = {
 				
 				hotstop_json = hotstop_json || {};
 				
-				self.id         =  hotstop_json.id || 'new_hs';
-				self.stop_name       =  hotstop_json.stop_name || {};
-				self.route_description      =  hotstop_json.route_description || {};
-				self.route_number = hotstop_json.route_number || {};
-				self.direction_name  =  hotstop_json.direction_name || {};
-				self.stop_id =  hotstop_json.stop_id || {};
-				self.route_id =  hotstop_json.route_id || {};
-				self.direction_id =  hotstop_json.direction_id || {};
+				self.id  =  hotstop_json.id || 'new_hs';
+				self.stop =  hotstop_json.stop || {};
+				self.route =  hotstop_json.route || {};
+				self.direction =  hotstop_json.direction || {};
 				self.available_routes  =  BusBoard.get_routes( );
 
-				if ( self.route.length ) {
+				if ( self.route.id ) {
 					self.available_directions = self.get_available_directions();
 				
-					if ( self.direction.length ) {
-						self.get_available_stops = {};
+					if ( self.direction.id ) {
+						self.get_available_stops( );
 					}
 				}
 			};
@@ -108,8 +102,9 @@ var BusBoard = {
             // Set up listeners
 			self.set_dom_el = function( ) {
 				self.el = $( '#hotstop_' + self.id );
-				self.el.on( 'click', '.delete', self.delete_hotstop);
-			},
+				self.el.on( 'click', '.delete', self.delete_hotstop )
+				.on( 'click', '.request_departures', self.request_departures );
+			};
 
             self.add_route_listeners  =  function ( form ) {
 				form
@@ -122,13 +117,25 @@ var BusBoard = {
 			};
 			
 			self.request_departures  =  function( ) {
-				var url = BusBoard.base_url +
-					'/' + self.route +
-					'/' + self.direction +
-					'/' + self.stop;
+				var url = BusBoard.nextrip_url +
+					'/' + self.route.number +
+					'/' + self.direction.value +
+					'/' + self.stop.abbr ;
 
-				$.get( url, self.update_departure_info );
+				var req = $.ajax( {
+					'url' : url,
+					'dataType': 'jsonp',
+					'data': {'format': 'json'}
+				} );
+
+				req.then( self.update_departure_info );
             };
+
+			self.update_departure_info = function( data ) {
+				console.log( data[0] );
+				var selector = ( data[0].Actual ) ? '.predicted_time' : '.scheduled_time';
+				self.el.find( selector ).text( data[0].DepartureText );
+			};
             
             self.get_available_stops = function( ) {
                 var url = '/stops/' +
@@ -243,13 +250,12 @@ var BusBoard = {
 
 			self.delete_hotstop = function( e ) {
 				e.preventDefault( );
-				var settings = {
-					'data' : { 'id' : self.id },
-					'type' : 'DELETE'};
-				deleted = $.ajax('/hotstops/', settings);
+				var settings = {'type' : 'DELETE'};
+				var url = '/hotstops/' + self.id;
+				deleted = $.ajax(url, settings);
 				deleted.then( function () {
-					self.hs_el.slideUp( function( ) {
-						self.hs_el.remove();
+					self.el.slideUp( function( ) {
+						self.el.remove();
 					});
 				});
 			};

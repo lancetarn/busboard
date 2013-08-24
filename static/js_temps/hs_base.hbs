@@ -1,15 +1,18 @@
 {{#each this}}
-        <h2 class="hotstop">{{this.route_number}} - {{this.stop_name}} - {{this.direction_name}}</h2>
         <ul id="hotstop_{{this.id}}">
-            <li class="route">Route: {{this.route_description}}</li>
-            <li class="stop">Stop: {{this.stop_name}}</li>
-            <li class="direction">Direction: {{this.direction_name}}</li>
+            <li>
+                <h2 class="hotstop">{{this.route.number}} | {{this.stop.name}} | {{this.direction.name}}</h2>
+            </li>
+            <li class="route">Route: {{this.route.description}}</li>
+            <li class="stop">Stop: {{this.stop.name}}</li>
+            <li class="direction">Direction: {{this.direction.name}}</li>
             <li class="scheduled">Next Scheduled Trip:
-            <span class="loader" data-hsid="{{this.id}}">Loading...</span>
+            <span class="scheduled_time">Loading...</span>
             </li>
             <li class="predicted">Next Predicted Actual:
-            <span class="loader" data-hsid="{{this.id}}">Loading...</span>
+            <span class="predicted_time">Loading...</span>
             </li>
-            <li><a class="delete" href="/hotstops/">Delete</a>
+            <li><a class="delete" href="/hotstops/">Delete</a></li>
+            <li><button class="request_departures">Request Departures</button></li>
         </ul>
 {{/each}}

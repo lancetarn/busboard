@@ -21,6 +21,13 @@ class Stop(BaseModel):
     name = CharField()
     updated = DateTimeField(default=datetime.datetime.now)
 
+    def to_display_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'abbr': self.abbr
+        }
+
 
 class Route(BaseModel):
     # Number has to be char; routes have letters
@@ -36,10 +43,24 @@ class Route(BaseModel):
 
         return directions
 
+    def to_display_dict(self):
+        return {
+            'id': self.id,
+            'description': self.description,
+            'number': self.route
+        }
+
 
 class Direction(BaseModel):
     value = IntegerField()
     text = CharField()
+
+    def to_display_dict(self):
+        return {
+            'id': self.id,
+            'name': self.text,
+            'value': self.value
+        }
 
 
 class RouteStopAssociation(BaseModel):
@@ -63,13 +84,8 @@ class HotStop(BaseModel):
 
     def to_display_dict(self):
         return {
-            'direction_id': self.direction.id,
-            'direction_name': self.direction.text,
+            'direction': self.direction.to_display_dict(),
             'id': self.id,
-            'member_id': self.member.id,
-            'route_description': self.route.description,
-            'route_id': self.route.id,
-            'route_number': self.route.route,
-            'stop_id': self.stop.id,
-            'stop_name': self.stop.name,
+            'route': self.route.to_display_dict(),
+            'stop': self.stop.to_display_dict(),
         }
