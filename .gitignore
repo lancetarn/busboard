@@ -3,3 +3,7 @@
 
 # Swaps #
 *.swp
+
+#config #
+busboard_config.py
+
